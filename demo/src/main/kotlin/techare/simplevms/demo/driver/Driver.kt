@@ -3,24 +3,24 @@ package techare.simplevms.demo.driver
 import foundation.observable.AbstractObservable
 import foundation.pedantic.expectStateOfOrFail
 import foundation.utils.si
-import techare.simplevms.demo.model.SimulationModel
+import techare.simplevms.demo.model.Simulation
 import java.time.Duration
 import java.time.LocalDateTime
 
 class Driver() : AbstractObservable<Driver>(), Runnable {
     sealed class State {
         data object UnConfigured : State()
-        data class Ready(val model: SimulationModel) : State()
-        data class Running(val model: SimulationModel, val timestamp: LocalDateTime) : State()
+        data class Ready(val model: Simulation) : State()
+        data class Running(val model: Simulation, val timestamp: LocalDateTime) : State()
         data class Aborted(
-            val model: SimulationModel,
+            val model: Simulation,
             val timestamp: LocalDateTime,
             val duration: Duration,
             val cause: Throwable,
         ) : State()
 
         data class Stopped(
-            val model: SimulationModel,
+            val model: Simulation,
             val timestamp: LocalDateTime,
             val duration: Duration
         ) : State()
@@ -29,7 +29,7 @@ class Driver() : AbstractObservable<Driver>(), Runnable {
     var state: State = State.UnConfigured; private set
     var runCounter: UInt = 0u; private set
 
-    fun configure(model: SimulationModel) {
+    fun configure(model: Simulation) {
 
         state.expectStateOfOrFail<State, State.Running> {
             throw IllegalStateException(
@@ -54,7 +54,7 @@ class Driver() : AbstractObservable<Driver>(), Runnable {
 
 }
 
-private fun Driver.State.model(): SimulationModel? {
+private fun Driver.State.model(): Simulation? {
     return when (this) {
         is Driver.State.Aborted -> model
         is Driver.State.Ready -> model

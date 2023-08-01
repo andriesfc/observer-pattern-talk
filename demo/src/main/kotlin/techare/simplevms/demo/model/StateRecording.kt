@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 
 @ExperimentalSerializationApi
 @Serializable
-data class StateRecordingModel(
+data class StateRecording(
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val enabled: Boolean = true,
     @EncodeDefault(EncodeDefault.Mode.ALWAYS) val location: String? = null
 )

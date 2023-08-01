@@ -1,5 +1,7 @@
 package foundation.statedriven
 
+import foundation.testing.debug
+import io.kotest.assertions.asClue
 import io.kotest.assertions.throwables.shouldNotThrowAnyUnit
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.BehaviorSpec
@@ -9,6 +11,7 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.ints.shouldBeExactly
 import io.kotest.matchers.nulls.shouldNotBeNull
+import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -30,7 +33,7 @@ class StateDataTest : BehaviorSpec({
             Then("latest should match state of \"Initial\" with data value of 61 (unsigned)") {
                 state.latest.data.shouldBe(61u)
                 state.latest.state.shouldBe("Initial")
-                state.latest.dataClass.shouldBe(UInt::class.java)
+                state.latest.type.shouldBe(UInt::class.java)
             }
         }
         When("Setting 6 more state data elements") {
@@ -48,7 +51,7 @@ class StateDataTest : BehaviorSpec({
             Then("State latest should have state and value of \"$last\" and \"$lastData\"") {
                 state.latest.state shouldBe last
                 state.latest.data shouldBe lastData
-                state.latest.dataClass shouldBe UUID::class.java
+                state.latest.type shouldBe UUID::class.java
             }
         }
         When("Destructuring latest") {
@@ -83,6 +86,25 @@ class StateDataTest : BehaviorSpec({
             Then("last removed should not be in state") {
                 s.shouldNotContain(last)
             }
+        }
+    }
+
+    Given("A state recording") {
+
+        val seq = listOf("one", "two", "three", "four", "five")
+        val state = StateData<Int>()
+
+        Then("State should have record 5 values") {
+            seq.indices.forEach { i -> state[i] = seq[i] }
+            state.latest.debug("latest:")
+            state.latest.should { latest ->
+                "latest.state".asClue { latest.state shouldBe seq.size - 1 }
+                "latest.data".asClue { latest.data shouldBe seq.last() }
+                "latest.type".asClue { latest.type shouldBe String::class.java }
+            }
+        }
+        And("State should have record all changes in seq") {
+           "state.size".asClue { state.size shouldBe seq.size }
         }
     }
 

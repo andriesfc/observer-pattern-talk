@@ -1,0 +1,41 @@
+simulation_id: sample-1
+auto_activate: false
+state_recording:
+  enabled: true
+  location: "recordings"
+controlling:
+  movement:
+    assembly: "MovementAssembly"
+    location: "integrated point P719-2"
+    serial_no: "SGMALABRAD-1083-689-58891"
+    description: |-
+      Only allows for movement in on direction. Do not use this 
+      in real live. Danger Will Robinson ☢️⛔️☠️
+  cabin_light:
+    assembly: "CabinLightAssembly"
+    location: "front main cabin"
+    serial_no: "SGMALABRAD-7154-243-60306"
+    description: |-
+      Cabin light which supports the following operations:
+        - dim
+        - on (full brightness)
+        - off
+run:
+  default:
+    repeat: 3
+    unit_of_tick: '800 millisec'
+    when_done:
+      - go-interactive
+      - help -interactive
+    sequence:
+      - start
+      - speed inc 5 for 6 tick
+      - speed inc 5 for 12 ticks
+      - speed inc 18 for 3 ticks
+      - speed dec 16
+      - cabin dim for 16 ticks
+      - cabin on for 8 ticks
+      - cabin off
+      - speed dec 100 for 80 ticks
+      - pause for 5 ticks
+      - stop

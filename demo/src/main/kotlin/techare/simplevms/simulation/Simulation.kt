@@ -2,7 +2,7 @@ package techare.simplevms.simulation
 
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils.randomNanoId
 import foundation.observable.AbstractObservable
-import foundation.observable.DetachAwareObservation
+import foundation.observable.DetachObservation
 import foundation.observable.Observer
 import foundation.utils.toCharArray
 import foundation.utils.yn
@@ -49,12 +49,12 @@ class Simulation(
     var activationDate: LocalDateTime? = null; private set
     var deactivationDate: LocalDateTime? = null; private set
 
-    private val observer = object : Observer<Sensor>, DetachAwareObservation {
+    private val observer = object : Observer<Sensor>, DetachObservation {
         init {
             if (autoActivating) attach()
         }
 
-        override fun observerDetached() {
+        override fun detached() {
             activated = false
             deactivationDate = LocalDateTime.now()
             this@Simulation.notifyObservers()
@@ -70,8 +70,8 @@ class Simulation(
         }
 
         fun detach() {
-            movement.detach(this)
-            cabinLight.detach(this)
+            movement.manageDetachment(this)
+            cabinLight.manageDetachment(this)
             activationDate = LocalDateTime.now()
             deactivationDate = null
         }

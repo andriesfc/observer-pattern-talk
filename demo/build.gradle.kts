@@ -18,4 +18,6 @@ dependencies {
     implementation("com.charleskorn.kaml:kaml")
     implementation("com.github.ajalt.clikt:clikt")
     implementation("com.github.ajalt.mordant:mordant")
+    implementation("io.github.xn32:json5k")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-hocon")
 }

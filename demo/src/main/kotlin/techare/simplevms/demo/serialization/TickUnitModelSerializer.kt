@@ -9,12 +9,12 @@ import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
-import techare.simplevms.demo.model.TickUnitModel
+import techare.simplevms.demo.model.TickUnit
 import java.util.concurrent.TimeUnit
 
-object TickUnitModelSerializer : KSerializer<TickUnitModel> {
+object TickUnitModelSerializer : KSerializer<TickUnit> {
 
-    private val SERIAL_NAME: String = TickUnitModel::class.java.simpleName
+    private val SERIAL_NAME: String = TickUnit::class.java.simpleName
     private const val TIME_UNIT_NANO_SECONDS = "nanosec"
     private const val TIME_UNIT_MICRO_SECONDS = "microsec"
     private const val TIME_UNIT_MILLI_SECONDS = "millisec"
@@ -25,7 +25,7 @@ object TickUnitModelSerializer : KSerializer<TickUnitModel> {
     private val splitOnSpaces = Regex("\\s+")
 
     override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor(SERIAL_NAME, PrimitiveKind.STRING)
-    override fun deserialize(decoder: Decoder): TickUnitModel {
+    override fun deserialize(decoder: Decoder): TickUnit {
 
         val encoded = decoder.decodeString()
 
@@ -44,8 +44,8 @@ object TickUnitModelSerializer : KSerializer<TickUnitModel> {
                 allowed for the first value.
                 """.si()
             )
-        return TickUnitModel(
-            value = encodedValue.toUIntOrNull()
+        return TickUnit(
+            duration = encodedValue.toUIntOrNull()
                 ?: throw IllegalArgumentException(
                     """
                     Encoded value is not valid: [$encodedValue]. Please ensure that encoded value is whole positive
@@ -56,8 +56,8 @@ object TickUnitModelSerializer : KSerializer<TickUnitModel> {
         )
     }
 
-    override fun serialize(encoder: Encoder, value: TickUnitModel) {
-        encoder.encodeString("${value.value} ${value.unit.serializedName()}")
+    override fun serialize(encoder: Encoder, value: TickUnit) {
+        encoder.encodeString("${value.duration} ${value.unit.serializedName()}")
     }
 
     private fun TimeUnit.serializedName(): String {
