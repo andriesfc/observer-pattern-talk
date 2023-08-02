@@ -1,13 +1,98 @@
-# Observer Pattern
+# Observer Pattern - The story of good, (but mostly bad) software
 
 This pattern is part of the behavioral patterns in software design. Like all patterns it is not only important to know why we want to use this pattern, but also when do not want to use this pattern.
 
-## Intent
+> Also consider that since Java 1.x there exists an Observable implementation which is now deprecated.
 
-1. When dependent object within a software system needs to know when object (the subject), changes state.
-2. Ensure that objects within a software system is loosely coupled but have high cohesion.
+## What and Why
 
-### Some Prerequisites
+1. What happens: When dependent object within a software system needs to know when object (the subject), changes state.
+2. Why: Ensure that objects within a software system is loosely coupled but have high cohesion.
+
+## Implementing this pattern
+
+We're dealing with 2 objects:
+
+1. A subject. This is the object which are being observed.
+2. An observer, which is the object which observes the subject.
+
+## Typical implementation
+
+```puml
+@startuml
+
+abstract class Observable {
+   - observers: Observer[]
+   # notifyObservers()
+   + attach(observer: Observer)
+   + detach(observer: Observer)
+   + isAttached(observer: Observer) : Boolean
+}
+
+interface Observer {
+   + subjectChanged(subject: Observable)
+}
+
+Observer .. Observable : > Observes\nchanges
+
+Observable ..{ Observer : > Dispatch\nchanges
+
+class MonitoredAlarm {
+   + isTriggered: Boolean
+   + lastTrigger(): TriggerDetails?
+   + reset(authCode)
+}
+
+MonitoredAlarm -left-|> Observable : extends\nfrom 
+note top
+Example of alarm sensor
+being modelled as an
+observable
+end note
+
+
+@enduml
+```
+
+Things to note:
+
+- There may be multiple observers which gets notified.
+- The observer needs to be attached to the subject to know of any changes.
+- The observable is an abstract class.
+
+
+### Typical Flow
+
+1. Observer attach to an Subject
+2. When the Subject changes state it, signals each observer that it's state has changed.
+3. When an Observer does not need to, or does not care to know about anymore state changes, it detaches from the subject.
+
+## Reasons for not using the pattern
+
+1. When this pattern may introduces needles coupling between two systems.
+2. When the order of notifications are of concern.
+3. Introduces overhead (observers needs to be managed)
+4. Makes it difficult to reason about a system:
+   - Coupling in unexpected places.
+   - Logic/Flow can be attached anywhere the observer is exposed.
+   - Makes it difficult to debug, as bugs may be hide side effects.
+5. If overused, tends to produced brittle/buggy software due to issues of different life cycles the observer and subject. Consider that most observers are transient. So the subject must be able to deal with observers going away (even abnormally).
+
+## When should I use this pattern?
+
+1. When there us clear one to many relationship between related entities.
+2. When this relationship needs to change in some dynamic way, either in design or during runtime.
+3. When you want to implement an hand off between systems, and do not want disturb your domain model (more than just observing it).
+
+## How should I use this pattern?
+
+1. Be very careful not to expose the observer outside of your model, as it may invite others to attach to your model without observing the life cycle of your model.
+2. Be aware that the actual changes only gets exposed by caller the subject. Such a call may be expensive over a network. So do not use it as pub sub system.
+3. Always threat observables as low level internal API.
+4. Handle bad observers.
+5. Consider concurrency issues.
+
+### Background
 
 Understanding the phrase, "High cohesion and low coupling". This is one those phrases which we all hear an explanation for, and immediately afterwards. Personally I think the reason for this is that whole sentence reeks of cogitative dissonance, So our (over "logical" brain just kills it off before we can even think about remembering it).
 
@@ -22,7 +107,7 @@ This sounds still very complex, but the application of it is actually not that d
 ```puml
 @startuml
 
-class Customer {
+class SafetyOperator {
    + name: String
    + custNo: String
    + sendEmail(Message)
@@ -36,107 +121,36 @@ class Customer {
 class Pressure 
 class Health
 
-class PressureSensor {
+class MonitoredPressureValve {
    + name: String
    + serialNo: String
    + read(): Pressure
    + checkHealth(): Health
 }
 
-PressureSensor --> Pressure
-PressureSensor --> Health
+MonitoredPressureValve --> Pressure
+MonitoredPressureValve --> Health
+SafetyOperator -- MonitoredPressureValve : > inspects 
 
 @enduml
 ```
 
 Consider responsibilities of each classes:
 
-|     | `Customer`         | `PressureSensor`  |
-| --- | ------------------ | ----------------- |
-| 1   | change `name`      | change `name`     |
-| 2   | change `custNo`    | change `serialNo` |
-| 3   | Sending email      | Reading Sensor    |
-| 4   | Accessing Orders   | -                 |
-| 5   | Accessing Invoices | -                 |
-| 6   | Security           | -                 |
+|     | `Customer`         | `MonitoredPressureValve` |
+| --- | ------------------ | ------------------------ |
+| 1   | change `name`      | change `name`            |
+| 2   | change `custNo`    | change `serialNo`        |
+| 3   | Sending email      | Reading Sensor           |
+| 4   | Accessing Orders   | -                        |
+| 5   | Accessing Invoices | -                        |
+| 6   | Security           | -                        |
 
 Operations related not to class:
 
 - Customer : 4
 - Pressure Sensor : 0
 
-The `Customer` class has the lowest cohesion since features 4 operation which has no direct relation to itself. While the `PressureSensor` class functions and attributes related directly to the concept of sensor.
+The `Customer` class has the lowest cohesion since features 4 operation which has no direct relation to itself. While the `MonitoredPressureValve` class functions and attributes related directly to the concept of sensor.
 
 Coupling is simply dependencies a class has on other classes. In this case the pressure sensor class is dependent on the `Pressure`(Reading), and `Health` classes. And nothing more. Further if these classes do no originate from separate modules, they can be ignored.
-
-## Reasons for not using the pattern
-
-1. When this pattern introduces needles coupling between two systems.
-2. When the order of notifications are of concern.
-
-## What is this pattern
-
-We're dealing with 2 objects:
-
-1. A subject. This is the object which are being observed.
-2. An observer, which is the object which observes the subject.
-
-![observables-diagram](observables.png)
-
-### Typical Flow
-
-1. Observer attach to an Subject
-2. When the Subject changes state it, signals each observer that it's state has changed.
-3. When an Observer does need to, or care to know about anymore state changes, it detaches from the subject.
-
-## Demonstrations
-
-### Simple Demo - In Vehicle Fleet Monitoring System (IFMS)
-
-#### Version 1
-
-1. Driver unlocks the vehicle using his electronic key card.
-2. IFMS detects that a valid driver is using the vehicle.
-3. IFMS immediately:
-   - Switch on the vehicles dashboard.
-   - switch on cabin lights on the front seats.
-4. Driver switch on the car to drive.
-   - IFMS detects that engine is starting.
-   - IFMS checks battery level
-   - IFMS checks fuel level
-   - Logs trip start:
-      - Start date and time.
-      - Mileage
-      - Fuel level
-5. Driver starts his journey
-6. Driver stops his journey
-7. IFMS:
-   - Logs end of trip:
-     - Date and time
-     - Millage
-     - Fuel Level
-
-#### Version 2
-
-Owner of the fleet had GPS devices installed to track trip locations. Ultimately this is to ensure that vehicles operates not only within fuel budget, but also aid in the recovery of the vehicle in case of hijacking and theft. As part of this initiative IFMS needs to implement the following:
-
-1. When the vehicle start and end a trip it should also log the geo coordinates of the vehicle.
-2. In addition, while the vehicle is outside of the a company depot, it should continuously broadcast the vehicles location, fuel level, and date time stamp.
-3. When a vehicle enters a depot, it should dump detailed censor logs to the company server (via WIFI).
-
-##### Important to note
-
-1. Not all vehicles may have GPS installed (yet)
-2. Not all vehicles may have network capabilities.
-
-#### Naive implementation
-
-##### Problems with this implementation
-
-#### Better Implementation
-
-##### Objectives refactoring needs to achieve
-
-1. Prevent coupling between the IFMS monitoring logic and censor components.
-2. Deal with situations where there are no GSM network capabilities.
-3. Make it easy for a developer/maintenance engineer to follow the logic.

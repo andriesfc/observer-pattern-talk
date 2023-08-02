@@ -7,6 +7,6 @@ interface Observable<out T : Observable<T>> {
     infix fun isObservedBy(observer: Observer<T>): Boolean
     fun detachAll()
     fun isObserved(): Boolean
-
+    fun countObservers():Int
 }
 

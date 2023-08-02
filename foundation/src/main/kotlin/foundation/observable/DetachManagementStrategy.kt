@@ -6,17 +6,17 @@ package foundation.observable
  * the [DetachObservation], or the [DetachObserverAware] interfaces.
  *
  * @see [AbstractObservable.detachManagementStrategy]
- * @see [DetachManagementStrategy.Managed]
+ * @see [DetachManagementStrategy.Handled]
  *
  */
 sealed interface DetachManagementStrategy {
-    data object None : DetachManagementStrategy
+    data object Default : DetachManagementStrategy
 
     /**
      * Implement this interface and make sure the [AbstractObservable.detachManagementStrategy] returns
      * an instance of it.
      */
-    fun interface Managed : DetachManagementStrategy {
+    fun interface Handled : DetachManagementStrategy {
 
         /**
          * Caller context indicates which the detach operation was done through the [Observable.detach], or

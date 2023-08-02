@@ -9,3 +9,7 @@ build
 **.drawio.bkp
 
 .idea
+
+.DS_Store
+
+bin/

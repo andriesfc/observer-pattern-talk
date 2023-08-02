@@ -5,6 +5,5 @@ pluginManagement {
 
 rootProject.name = "talk-observable-pattern"
 
-include("demo")
 include("foundation")
 

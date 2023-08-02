@@ -1,7 +1,8 @@
 package foundation.observable
 
-import foundation.observable.DetachManagementStrategy.Managed
+import foundation.observable.DetachManagementStrategy.Handled
 import foundation.testing.debug
+import io.kotest.assertions.asClue
 import io.kotest.assertions.throwables.shouldNotThrowAnyUnit
 import io.kotest.assertions.throwables.shouldThrowAnyUnit
 import io.kotest.core.spec.style.ShouldSpec
@@ -14,19 +15,19 @@ import io.kotest.matchers.types.shouldBeInstanceOf
 import io.mockk.*
 
 
-private typealias AnyObservable = Observer<Observable<Observable<*>>>
+private typealias AnyObserver = Observer<Observable<Observable<*>>>
 
-class TestAbstractObservableStateManagement : ShouldSpec({
+class AbstractObservableTest : ShouldSpec({
 
-    val iAmBadError = "iAmBadOne"
+     context("An observer which throws an exception when it gets notified with detached.") {
 
-    val faultyObserver: AnyObservable = mockk("faultyObserver", false, DetachObservation::class) {
-        this as DetachObservation
-        every { subjectChanged(any()) } just runs
-        every { detached() } throws Exception(iAmBadError)
-    }
+        val iAmBadError = "iAmBadOne"
 
-    context("An observer which throws an exception when it gets notified with detached.") {
+        val faultyObserver: AnyObserver = mockk("faultyObserver", false, DetachObservation::class) {
+            this as DetachObservation
+            every { subjectChanged(any()) } just runs
+            every { detached() } throws Exception(iAmBadError)
+        }
 
         context("An subject which does not handle exception thrown") {
             val naiveObservable = object : AbstractObservable<Observable<*>>() {}.apply { attach(faultyObserver) }
@@ -50,21 +51,21 @@ class TestAbstractObservableStateManagement : ShouldSpec({
                 }
 
 
-                fun detachCallbackFailed(c: Managed.DetachTriggeredFrom, o: Observable<*>, s: Managed.PostDetachState) {
+                fun detachCallbackFailed(c: Handled.DetachTriggeredFrom, o: Observable<*>, s: Handled.PostDetachState) {
                     lastErrorContext = c.debug("context")
                     lastErrorState = s.debug("state")
                     o.debug("observable")
                 }
 
-                var lastErrorState: Managed.PostDetachState? = null; private set
-                var lastErrorContext: Managed.DetachTriggeredFrom? = null; private set
+                var lastErrorState: Handled.PostDetachState? = null; private set
+                var lastErrorContext: Handled.DetachTriggeredFrom? = null; private set
 
                 fun discardLastErrorState() {
                     lastErrorState = null
                     lastErrorContext = null
                 }
 
-                override val detachManagementStrategy: DetachManagementStrategy = Managed { a, b, c ->
+                override val detachManagementStrategy: DetachManagementStrategy = Handled { a, b, c ->
                     detachCallbackFailed(a, b, c)
                 }
             }
@@ -76,9 +77,9 @@ class TestAbstractObservableStateManagement : ShouldSpec({
             should("does not fail with an exception when it tries to detach the observer") {
                 shouldNotThrowAnyUnit { safer.detach(faultyObserver) }
                 safer.lastErrorState.debug("lastErrorState")
-                    .shouldBeInstanceOf<Managed.PostDetachState.Panic>()
+                    .shouldBeInstanceOf<Handled.PostDetachState.Panic>()
                     .cause.shouldHaveMessage(iAmBadError)
-                safer.lastErrorContext.debug("lastErrorContext").shouldBe(Managed.DetachTriggeredFrom.Detach)
+                safer.lastErrorContext.debug("lastErrorContext").shouldBe(Handled.DetachTriggeredFrom.Detach)
                 safer.discardLastErrorState()
 
             }
@@ -87,7 +88,29 @@ class TestAbstractObservableStateManagement : ShouldSpec({
             }
         }
     }
+
+    // todo
+    xcontext("An observer throws an exception on change notification") {
+
+        val faultyObserver = mockk<AnyObserver> {
+            every { subjectChanged(any()) } throws Exception("Kaboom")
+        }
+
+        should("Deal with faulty observer according the default behaviour") {
+            "Default behaviours is to raise the exception".asClue {
+            }
+        }
+        should("Deal with faulty observer ignoring it") {
+            "Expecting no exception be thrown".asClue {
+            }
+        }
+
+        should("Deal with faulty observer by logging it to standard out") {}
+        should("Deal with faulty observer by logging it to standard err") {}
+        should("Deal with faulty observer by collecting it.") {}
+    }
 })
+
 
 
 

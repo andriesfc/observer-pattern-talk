@@ -1,9 +1,11 @@
-package foundation.observable.doodads;
+package foundation.observable.oddsAndEnds;
 
 import foundation.observable.AbstractObservable;
+import foundation.observable.doodads.Message;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.List;
+import java.util.Random;
 
 import static java.util.Objects.requireNonNull;
 
@@ -24,13 +26,17 @@ public class DaddyDoesJava extends AbstractObservable<DaddyDoesJava> {
     }
 
     public void doing() {
+        nextJob();
+        notifyObservers();
+    }
+
+    private void nextJob() {
         DoingNow next;
         do {
             var i = random.nextInt(0, DoingNow.entries().size());
             next = DoingNow.entries().get(i);
-        } while (next== doingNow);
+        } while (next == doingNow);
         this.doingNow = next;
-        notifyObservers();
     }
 
     public enum DoingNow implements Message {
@@ -38,21 +44,21 @@ public class DaddyDoesJava extends AbstractObservable<DaddyDoesJava> {
         RESTING("Resting daddy"),
         COOLING("Cooling daddy"),
         BENDING("Bending daddy");
+        private static final List<DoingNow> entries = List.of(DoingNow.values());
         private final String label;
-        DoingNow(@NotNull String label)  {
+
+        DoingNow(@NotNull String label) {
             this.label = requireNonNull(label);
+        }
+
+        public static List<DoingNow> entries() {
+            return entries;
         }
 
         @NotNull
         @Override
         public String message() {
             return label;
-        }
-
-        private static final List<DoingNow> entries = List.of(DoingNow.values());
-
-        public static List<DoingNow> entries() {
-            return entries;
         }
     }
 
