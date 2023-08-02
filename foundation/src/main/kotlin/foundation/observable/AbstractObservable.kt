@@ -45,7 +45,13 @@ abstract class AbstractObservable<T : Observable<T>> protected constructor(
      */
     protected open val detachManagementStrategy: DetachManagementStrategy = DetachManagementStrategy.Default
 
-    protected open val notificationFailureStrategy: ObserverNotificationFailureAction = ObserverNotificationFailureAction.Default
+    /**
+     * Notification failure strategy used if you choose to call the [notifyObservers] (without specifying
+     * a specific strategy.
+     */
+    protected open val notificationFailureStrategy: ObserverNotificationFailureAction =
+        ObserverNotificationFailureAction.Default
+
     override fun countObservers(): Int = observers.size
     override fun attach(observer: Observer<T>): Boolean {
         return if (observer !in observers)
@@ -91,13 +97,13 @@ abstract class AbstractObservable<T : Observable<T>> protected constructor(
     protected open fun notifyObservers(notificationFailureStrategy: ObserverNotificationFailureAction) {
         observers.forEachIndexed { i, observer ->
             observer as Observer<Observable<T>>
-            manageNotifyObserver(observer, i, notificationFailureStrategy)
+            mangedNotification(observer, i, notificationFailureStrategy)
         }
     }
 
     protected fun notifyObservers() = notifyObservers(notificationFailureStrategy)
 
-    private fun manageNotifyObserver(
+    private fun mangedNotification(
         observer: Observer<Observable<T>>,
         index: Int,
         failureAction: ObserverNotificationFailureAction,
@@ -114,7 +120,6 @@ abstract class AbstractObservable<T : Observable<T>> protected constructor(
         } ?: return
         throw ex
     }
-
 
     override fun isObserved(): Boolean = observers.isNotEmpty()
 }
